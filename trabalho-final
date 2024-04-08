@@ -1,0 +1,261 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_PASSAGEIROS 10
+#define MAX_FILA_ESPERA 5
+
+typedef struct {
+    char cpf[12];
+    char nome[50];
+    char endereco[100];
+    char telefone[15];
+    int numPassagem;
+    int numPoltrona;
+    int numVoo;
+    char horario;
+} Passageiro;
+
+typedef struct {
+    Passageiro passageiros[MAX_PASSAGEIROS];
+    int numPassageiros;
+    Passageiro filaEspera[MAX_FILA_ESPERA];
+    int numFilaEspera;
+} Voo;
+
+void salvarPassageiros(Voo *voo, const char *arquivo) {
+    FILE *fp = fopen(arquivo, "w");
+    if (fp == NULL) {
+        printf("Erro ao abrir arquivo.\n");
+        return;
+    }
+
+    fprintf(fp, "%d\n", voo->numPassageiros);
+    for (int i = 0; i < voo->numPassageiros; i++) {
+        Passageiro *passageiro = &voo->passageiros[i];
+        fprintf(fp, "%s;%s;%s;%s;%d;%d\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, passageiro->numPassagem, passageiro->numPoltrona);
+    }
+
+    fprintf(fp, "%d\n", voo->numFilaEspera);
+    for (int i = 0; i < voo->numFilaEspera; i++) {
+        Passageiro *passageiro = &voo->filaEspera[i];
+        fprintf(fp, "%s;%s;%s;%s;%d;%d\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, passageiro->numPassagem, passageiro->numPoltrona);
+    }
+
+    fclose(fp);
+}
+
+void carregarPassageiros(Voo *voo, const char *arquivo) {
+    FILE *fp = fopen(arquivo, "r");
+    if (fp == NULL) {
+        printf("Erro ao abrir arquivo.\n");
+        return;
+    }
+
+    fscanf(fp, "%d\n", &voo->numPassageiros);
+    for (int i = 0; i < voo->numPassageiros; i++) {
+        Passageiro *passageiro = &voo->passageiros[i];
+        fscanf(fp, "%[^;];%[^;];%[^;];%[^;];%d;%d\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, &passageiro->numPassagem, &passageiro->numPoltrona);
+    }
+
+    fscanf(fp, "%d\n", &voo->numFilaEspera);
+    for (int i = 0; i < voo->numFilaEspera; i++) {
+        Passageiro *passageiro = &voo->filaEspera[i];
+        fscanf(fp, "%[^;];%[^;];%[^;];%[^;];%d;%d\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, &passageiro->numPassagem, &passageiro->numPoltrona);
+    }
+
+    fclose(fp);
+}
+
+void exibirPassageiros(Voo *voo) {
+    printf("Passageiros do voo:\n");
+    for (int i = 0; i < voo->numPassageiros; i++) {
+        Passageiro *passageiro = &voo->passageiros[i];
+        printf("CPF: %s, Nome: %s, Número da Passagem: %d, Número da Poltrona: %d\n", passageiro->cpf, passageiro->nome, passageiro->numPassagem, passageiro->numPoltrona);
+    }
+    printf("\n");
+}
+
+void pesquisarPorCPF(Voo *voo, const char *cpf) {
+    for (int i = 0; i < voo->numPassageiros; i++) {
+        Passageiro *passageiro = &voo->passageiros[i];
+        if (strcmp(passageiro->cpf, cpf) == 0) {
+            printf("Passageiro encontrado:\n");
+            printf("CPF: %s\nNome: %s\nEndereço: %s\nTelefone: %s\nNúmero da Passagem: %d\nNúmero da Poltrona: %d\n\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, passageiro->numPassagem, passageiro->numPoltrona);
+            return;
+        }
+    }
+
+    printf("Passageiro não consta neste voo.\n\n");
+}
+
+void pesquisarPorNome(Voo *voo, const char *nome) {
+    for (int i = 0; i < voo->numPassageiros; i++) {
+        Passageiro *passageiro = &voo->passageiros[i];
+        if (strcmp(passageiro->nome, nome) == 0) {
+            printf("Passageiro encontrado:\n");
+            printf("CPF: %s\nNome: %s\nEndereço: %s\nTelefone: %s\nNúmero da Passagem: %d\nNúmero da Poltrona: %d\n\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, passageiro->numPassagem, passageiro->numPoltrona);
+            return;
+        }
+    }
+
+    printf("Passageiro não consta neste voo.\n\n");
+}
+
+void cadastrarPassageiro(Voo *voo) {
+    if (voo->numPassageiros >= MAX_PASSAGEIROS) {
+        if (voo->numFilaEspera >= MAX_FILA_ESPERA) {
+            printf("Fila cheia, a reserva não pode ser feita.\n\n");
+            return;
+        }
+
+        Passageiro *filaEspera = &voo->filaEspera[voo->numFilaEspera];
+        printf("CPF: ");
+        scanf("%s", filaEspera->cpf);
+        printf("Nome: ");
+        scanf(" %[^\n]", filaEspera->nome);
+        printf("Endereço: ");
+        scanf(" %[^\n]", filaEspera->endereco);
+        printf("Telefone: ");
+        scanf("%s", filaEspera->telefone);
+        printf("Número da Passagem: ");
+        scanf("%d", &filaEspera->numPassagem);
+        printf("Número da Poltrona: ");
+        scanf("%d", &filaEspera->numPoltrona);
+
+        voo->numFilaEspera++;
+        printf("Passageiro adicionado à fila de espera.\n\n");
+    } else {
+        Passageiro *passageiro = &voo->passageiros[voo->numPassageiros];
+        printf("CPF: ");
+        scanf("%s", passageiro->cpf);
+        printf("Nome: ");
+        scanf(" %[^\n]", passageiro->nome);
+        printf("Endereço: ");
+        scanf(" %[^\n]", passageiro->endereco);
+        printf("Telefone: ");
+        scanf("%s", passageiro->telefone);
+        printf("Número da Passagem: ");
+        scanf("%d", &passageiro->numPassagem);
+        printf("Número da Poltrona: ");
+        scanf("%d", &passageiro->numPoltrona);
+
+        voo->numPassageiros++;
+        printf("Passageiro cadastrado.\n\n");
+    }
+}
+
+void excluirPassageiro(Voo *voo) {
+    char cpf[12];
+    printf("Digite o CPF do passageiro a ser excluído: ");
+    scanf("%s", cpf);
+
+    for (int i = 0; i < voo->numPassageiros; i++) {
+        Passageiro *passageiro = &voo->passageiros[i];
+        if (strcmp(passageiro->cpf, cpf) == 0) {
+            printf("Passageiro encontrado e excluído:\n");
+            printf("CPF: %s\nNome: %s\nEndereço: %s\nTelefone: %s\nNúmero da Passagem: %d\nNúmero da Poltrona: %d\n\n", passageiro->cpf, passageiro->nome, passageiro->endereco, passageiro->telefone, passageiro->numPassagem, passageiro->numPoltrona);
+
+            // Deslocar os passageiros seguintes para preencher o espaço vazio
+            for (int j = i + 1; j < voo->numPassageiros; j++) {
+                voo->passageiros[j - 1] = voo->passageiros[j];
+            }
+
+            voo->numPassageiros--;
+            return;
+        }
+    }
+
+    printf("Passageiro não consta neste voo.\n\n");
+}
+
+void exibirFilaEspera(Voo *voo) {
+    printf("Fila de espera:\n");
+    for (int i = 0; i < voo->numFilaEspera; i++) {
+        Passageiro *passageiro = &voo->filaEspera[i];
+        printf("CPF: %s, Nome: %s, Número da Passagem: %d, Número da Poltrona: %d\n", passageiro->cpf, passageiro->nome, passageiro->numPassagem, passageiro->numPoltrona);
+    }
+    printf("\n");
+}
+
+int main() {
+    int vooSelecionado;
+    Voo voos[3];
+    voos[0].numPassageiros = 0;
+    voos[0].numFilaEspera = 0;
+    voos[1].numPassageiros = 0;
+    voos[1].numFilaEspera = 0;
+    voos[2].numPassageiros = 0;
+    voos[2].numFilaEspera = 0;
+
+    // Carregar dados dos voos a partir de arquivos
+    carregarPassageiros(&voos[0], "bh-rio.txt");
+    carregarPassageiros(&voos[1], "bh-sp.txt");
+    carregarPassageiros(&voos[2], "bh-brasilia.txt");
+
+    printf("EMPRESA AÉREA QUEDA LIVRE - VOO BH-SP\n");
+    printf("MENU DE OPÇÕES\n");
+    printf("1 - BH-RIO\n");
+    printf("2 - BH-SP\n");
+    printf("3 - BH-BRASILIA\n");
+    printf("Selecione o número do voo: ");
+    scanf("%d", &vooSelecionado);
+
+    Voo *voo = &voos[vooSelecionado - 1];
+    int opcao;
+
+    do {
+        printf("\nMENU DO VOO %d\n", vooSelecionado);
+        printf("1 - Exibir passageiros\n");
+        printf("2 - Pesquisar passageiro por CPF\n");
+        printf("3 - Pesquisar passageiro por nome\n");
+        printf("4 - Cadastrar passageiro\n");
+        printf("5 - Excluir passageiro\n");
+        printf("6 - Exibir fila de espera\n");
+        printf("0 - Sair\n");
+        printf("Selecione uma opção: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                exibirPassageiros(voo);
+                break;
+            case 2: {
+                char cpf[12];
+                printf("Digite o CPF do passageiro: ");
+                scanf("%s", cpf);
+                pesquisarPorCPF(voo, cpf);
+                break;
+            }
+            case 3: {
+                char nome[50];
+                printf("Digite o nome do passageiro: ");
+                scanf(" %[^\n]", nome);
+                pesquisarPorNome(voo, nome);
+                break;
+            }
+            case 4:
+                cadastrarPassageiro(voo);
+                break;
+            case 5:
+                excluirPassageiro(voo);
+                break;
+            case 6:
+                exibirFilaEspera(voo);
+                break;
+            case 0:
+                break;
+            default:
+                printf("Opção inválida.\n");
+                break;
+        }
+
+    } while (opcao != 0);
+
+    // Salvar dados dos voos em arquivos
+    salvarPassageiros(&voos[0], "bh-rio.txt");
+    salvarPassageiros(&voos[1], "bh-sp.txt");
+    salvarPassageiros(&voos[2], "bh-brasilia.txt");
+
+    return 0;
+}
